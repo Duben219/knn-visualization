@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KNN Density Normalization Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .plot-container {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .plot-container:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .plot-title {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+        }
+        
+        svg {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .cell {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .cell:hover {
+            stroke-width: 4;
+            filter: brightness(1.1);
+        }
+        
+        .target-cell {
+            fill: #e74c3c !important;
+            stroke: #c0392b;
+            stroke-width: 3;
+        }
+        
+        .neighbor-cell {
+            fill: #3498db !important;
+            stroke: #2980b9;
+            stroke-width: 2;
+        }
+        
+        .other-cell {
+            fill: #95a5a6;
+            stroke: #7f8c8d;
+            stroke-width: 1;
+        }
+        
+        .knn-line {
+            stroke: #27ae60;
+            stroke-width: 2.5;
+            opacity: 0.8;
+        }
+        
+        .distance-line {
+            stroke: #e67e22;
+            stroke-width: 3;
+            opacity: 0.9;
+        }
+        
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #666;
+        }
+        
+        .info-panel {
+            background: linear-gradient(135deg, #e8f6f3, #d5f4e6);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: #2c3e50;
+            border: 1px solid #a8e6cf;
+        }
+        
+        .formula-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 2px solid #dee2e6;
+        }
+        
+        .formula-title {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+        
+        .formula-box {
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            box-shadow: 0 2px 10px rgba(52, 152, 219, 0.1);
+        }
+        
+        .formula-step {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .explanation {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        
+        .comparison-section {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid #dee2e6;
+            margin-top: 20px;
+        }
+        
+        .export-instructions {
+            background: #e8f4f8;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .export-instructions h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        
+        .step-list {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .step-list li {
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .visualization-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>KNN-Based Density Normalization</h1>
+            <div class="subtitle">Interactive Visualization of Spatial Pattern Analysis</div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="showDenseExample()">Dense Region Example</button>
+            <button class="btn" onclick="showSparseExample()">Sparse Region Example</button>
+            <button class="btn" onclick="showComparison()">Distance Comparison</button>
+        </div>
+        
+        <div class="visualization-grid">
+            <div class="plot-container">
+                <div class="plot-title">Dense Region - High Cell Density</div>
+                <svg id="densePlot" width="400" height="300"></svg>
+                <div class="info-panel" id="denseInfo">
+                    Click any cell to view its K-nearest neighbors and density calculation
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>Target Cell</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <span>K-Neighbors</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #95a5a6;"></div>
+                        <span>Other Cells</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="plot-container">
+                <div class="plot-title">Sparse Region - Low Cell Density</div>
+                <svg id="sparsePlot" width="400" height="300"></svg>
+                <div class="info-panel" id="sparseInfo">
+                    Click any cell to view its K-nearest neighbors and density calculation
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>Target Cell</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <span>K-Neighbors</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #95a5a6;"></div>
+                        <span>Other Cells</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="comparison-section">
+                <div class="plot-title">Density Normalization Effect Comparison</div>
+                <svg id="comparisonPlot" width="100%" height="250" style="max-width: 900px;"></svg>
+                <div class="info-panel" id="comparisonInfo">
+                    Demonstrates how density normalization eliminates spatial density bias
+                </div>
+            </div>
+        </div>
+        
+        <div class="formula-section">
+            <div class="formula-title">KNN Density Normalization Formula</div>
+            
+            <div class="formula-box">
+                <div class="formula-step">Step 1: Calculate Local Density</div>
+                ρᵢ = (1/K) × Σ(k=1 to K) d(i, nₖ)
+            </div>
+            
+            <div class="formula-box">
+                <div class="formula-step">Step 2: Normalize Distance</div>
+                D_normalized(i,j) = d(i,j) / √(ρᵢ × ρⱼ)
+            </div>
+            
+            <div class="explanation">
+                <strong>Formula Components:</strong><br>
+                • ρᵢ: Local density of cell i (average distance to K nearest neighbors)<br>
+                • d(i, nₖ): Euclidean distance from cell i to its k-th nearest neighbor<br>
+                • d(i,j): Original Euclidean distance between cells i and j<br>
+                • D_normalized(i,j): Density-normalized distance between cells i and j<br>
+                • K: Number of nearest neighbors (typically 5-10)
+            </div>
+        </div>
+        
+        <div class="export-instructions" id="exportInstructions" style="display: none;">
+            <h3>🎯 How to Use This Visualization in PowerPoint</h3>
+            
+            <p><strong>Method 1: Screenshot Approach (Recommended)</strong></p>
+            <ol class="step-list">
+                <li>Set up your desired visualization state by clicking buttons and cells</li>
+                <li>Use browser's full-screen mode (F11) for clean capture</li>
+                <li>Take screenshots using Snipping Tool or similar</li>
+                <li>Insert screenshots into PowerPoint slides</li>
+                <li>Crop and resize as needed</li>
+            </ol>
+            
+            <p><strong>Method 2: Save as HTML</strong></p>
+            <ol class="step-list">
+                <li>Right-click on page → "Save as" → "Web Page, Complete"</li>
+                <li>Open the saved HTML file in presentation mode</li>
+                <li>Use browser's full-screen mode during presentation</li>
+                <li>Navigate between different examples using the buttons</li>
+            </ol>
+            
+            <p><strong>Method 3: Interactive Presentation</strong></p>
+            <ol class="step-list">
+                <li>Bookmark this page or save the HTML file</li>
+                <li>During presentation, open in browser</li>
+                <li>Use interactive features to demonstrate concepts live</li>
+                <li>Click on cells to show real-time K-NN calculations</li>
+            </ol>
+            
+            <p><strong>💡 Pro Tips:</strong></p>
+            <ul class="step-list">
+                <li>Use the "Dense Region Example" → "Sparse Region Example" → "Distance Comparison" sequence for logical flow</li>
+                <li>Click on different cells to show varying density calculations</li>
+                <li>Screenshot the formula section separately for detailed explanation slides</li>
+                <li>The visualization works best on screens with 1920x1080 resolution or higher</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let denseCells = [];
+        let sparseCells = [];
+        let selectedCell = null;
+        let K = 5;
+        
+        function generateDenseCells() {
+            denseCells = [];
+            // Dense clustering in center with some outliers
+            for (let i = 0; i < 35; i++) {
+                if (i < 25) {
+                    // Main cluster
+                    denseCells.push({
+                        x: 200 + (Math.random() - 0.5) * 120,
+                        y: 150 + (Math.random() - 0.5) * 80,
+                        id: i
+                    });
+                } else {
+                    // Few outliers
+                    denseCells.push({
+                        x: 60 + Math.random() * 280,
+                        y: 60 + Math.random() * 180,
+                        id: i
+                    });
+                }
+            }
+        }
+        
+        function generateSparseCells() {
+            sparseCells = [];
+            // Evenly distributed sparse cells
+            for (let i = 0; i < 18; i++) {
+                sparseCells.push({
+                    x: 70 + Math.random() * 260,
+                    y: 70 + Math.random() * 160,
+                    id: i
+                });
+            }
+        }
+        
+        function distance(p1, p2) {
+            return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+        }
+        
+        function findKNearestNeighbors(targetCell, allCells, k) {
+            const distances = allCells
+                .filter(cell => cell.id !== targetCell.id)
+                .map(cell => ({
+                    cell: cell,
+                    dist: distance(targetCell, cell)
+                }))
+                .sort((a, b) => a.dist - b.dist);
+            
+            return distances.slice(0, k);
+        }
+        
+        function calculateLocalDensity(targetCell, allCells, k) {
+            const neighbors = findKNearestNeighbors(targetCell, allCells, k);
+            const avgDistance = neighbors.reduce((sum, neighbor) => sum + neighbor.dist, 0) / k;
+            return avgDistance;
+        }
+        
+        function drawCells(svgId, cells) {
+            const svg = document.getElementById(svgId);
+            svg.innerHTML = '';
+            
+            cells.forEach(cell => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', cell.x);
+                circle.setAttribute('cy', cell.y);
+                circle.setAttribute('r', 5);
+                circle.setAttribute('class', 'cell other-cell');
+                circle.setAttribute('data-id', cell.id);
+                circle.setAttribute('data-svg', svgId);
+                
+                circle.addEventListener('click', function() {
+                    highlightKNN(cell, cells, svgId);
+                });
+                
+                svg.appendChild(circle);
+            });
+        }
+        
+        function highlightKNN(targetCell, allCells, svgId) {
+            const svg = document.getElementById(svgId);
+            const neighbors = findKNearestNeighbors(targetCell, allCells, K);
+            const density = calculateLocalDensity(targetCell, allCells, K);
+            
+            // Clear previous lines
+            const lines = svg.querySelectorAll('line');
+            lines.forEach(line => line.remove());
+            
+            // Reset all cell styles
+            const circles = svg.querySelectorAll('circle');
+            circles.forEach(circle => {
+                circle.setAttribute('class', 'cell other-cell');
+            });
+            
+            // Highlight target cell
+            const targetCircle = svg.querySelector(`[data-id="${targetCell.id}"]`);
+            targetCircle.setAttribute('class', 'cell target-cell');
+            
+            // Highlight K-neighbors and draw lines
+            neighbors.forEach((neighbor, index) => {
+                const neighborCircle = svg.querySelector(`[data-id="${neighbor.cell.id}"]`);
+                neighborCircle.setAttribute('class', 'cell neighbor-cell');
+                
+                // Draw connection line
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', targetCell.x);
+                line.setAttribute('y1', targetCell.y);
+                line.setAttribute('x2', neighbor.cell.x);
+                line.setAttribute('y2', neighbor.cell.y);
+                line.setAttribute('class', 'knn-line');
+                svg.insertBefore(line, svg.firstChild);
+                
+                // Add distance label
+                const midX = (targetCell.x + neighbor.cell.x) / 2;
+                const midY = (targetCell.y + neighbor.cell.y) / 2;
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', midX);
+                text.setAttribute('y', midY - 5);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#27ae60');
+                text.setAttribute('font-size', '10');
+                text.setAttribute('font-weight', 'bold');
+                text.textContent = `${neighbor.dist.toFixed(1)}`;
+                svg.appendChild(text);
+            });
+            
+            // Update info display
+            const infoId = svgId === 'densePlot' ? 'denseInfo' : 'sparseInfo';
+            const infoDiv = document.getElementById(infoId);
+            const regionType = svgId === 'densePlot' ? 'Dense' : 'Sparse';
+            infoDiv.innerHTML = `
+                <strong>Cell ${targetCell.id} (${regionType} Region)</strong><br>
+                K=${K} nearest neighbors average distance: <strong>${density.toFixed(2)} px</strong><br>
+                Local density ρ = ${density.toFixed(2)}
+            `;
+        }
+        
+        function showDenseExample() {
+            generateDenseCells();
+            drawCells('densePlot', denseCells);
+            document.getElementById('denseInfo').innerHTML = 'Click any cell to view its K-nearest neighbors and density calculation';
+        }
+        
+        function showSparseExample() {
+            generateSparseCells();
+            drawCells('sparsePlot', sparseCells);
+            document.getElementById('sparseInfo').innerHTML = 'Click any cell to view its K-nearest neighbors and density calculation';
+        }
+        
+        function showComparison() {
+            const svg = document.getElementById('comparisonPlot');
+            svg.innerHTML = '';
+            svg.setAttribute('viewBox', '0 0 900 250');
+            
+            // Create example cell pairs
+            const denseCell1 = {x: 150, y: 125, density: 18};
+            const denseCell2 = {x: 200, y: 125, density: 20};
+            const sparseCell1 = {x: 600, y: 125, density: 55};
+            const sparseCell2 = {x: 700, y: 125, density: 48};
+            
+            // Draw cells
+            [denseCell1, denseCell2, sparseCell1, sparseCell2].forEach(cell => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', cell.x);
+                circle.setAttribute('cy', cell.y);
+                circle.setAttribute('r', 8);
+                circle.setAttribute('fill', '#e74c3c');
+                circle.setAttribute('stroke', '#c0392b');
+                circle.setAttribute('stroke-width', 3);
+                svg.appendChild(circle);
+            });
+            
+            // Draw distance lines
+            const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line1.setAttribute('x1', denseCell1.x);
+            line1.setAttribute('y1', denseCell1.y);
+            line1.setAttribute('x2', denseCell2.x);
+            line1.setAttribute('y2', denseCell2.y);
+            line1.setAttribute('class', 'distance-line');
+            svg.appendChild(line1);
+            
+            const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line2.setAttribute('x1', sparseCell1.x);
+            line2.setAttribute('y1', sparseCell1.y);
+            line2.setAttribute('x2', sparseCell2.x);
+            line2.setAttribute('y2', sparseCell2.y);
+            line2.setAttribute('class', 'distance-line');
+            svg.appendChild(line2);
+            
+            // Calculate normalized distances
+            const rawDist1 = 50;
+            const rawDist2 = 100;
+            const normDist1 = rawDist1 / Math.sqrt(denseCell1.density * denseCell2.density);
+            const normDist2 = rawDist2 / Math.sqrt(sparseCell1.density * sparseCell2.density);
+            
+            // Add text labels
+            const texts = [
+                {x: 175, y: 90, text: 'Dense Region', size: 18, color: '#2c3e50', weight: 'bold'},
+                {x: 175, y: 160, text: `Raw Distance: ${rawDist1}px`, size: 14, color: '#e67e22'},
+                {x: 175, y: 180, text: `Normalized: ${normDist1.toFixed(2)}`, size: 14, color: '#27ae60'},
+                {x: 175, y: 200, text: `ρ₁=${denseCell1.density}, ρ₂=${denseCell2.density}`, size: 12, color: '#7f8c8d'},
+                
+                {x: 650, y: 90, text: 'Sparse Region', size: 18, color: '#2c3e50', weight: 'bold'},
+                {x: 650, y: 160, text: `Raw Distance: ${rawDist2}px`, size: 14, color: '#e67e22'},
+                {x: 650, y: 180, text: `Normalized: ${normDist2.toFixed(2)}`, size: 14, color: '#27ae60'},
+                {x: 650, y: 200, text: `ρ₁=${sparseCell1.density}, ρ₂=${sparseCell2.density}`, size: 12, color: '#7f8c8d'}
+            ];
+            
+            texts.forEach(textData => {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', textData.x);
+                text.setAttribute('y', textData.y);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', textData.color);
+                text.setAttribute('font-size', textData.size);
+                text.setAttribute('font-weight', textData.weight || 'normal');
+                text.textContent = textData.text;
+                svg.appendChild(text);
+            });
+            
+            // Update comparison info
+            document.getElementById('comparisonInfo').innerHTML = `
+                <strong>Density Normalization Effect:</strong> Although the sparse region's raw distance (${rawDist2}px) 
+                is ${rawDist2/rawDist1}× larger than the dense region (${rawDist1}px), the normalized distances are similar 
+                (${normDist1.toFixed(2)} vs ${normDist2.toFixed(2)}), effectively removing density bias.
+            `;
+        }
+        
+        // Initialize
+        showDenseExample();
+        showSparseExample();
+        showComparison();
+    </script>
+</body>
+</html>
