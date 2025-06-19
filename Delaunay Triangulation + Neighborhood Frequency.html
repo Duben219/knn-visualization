@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Delaunay Triangulation + Neighborhood Frequency Demo</title>
+<style>
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+    background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+    color: #222;
+    min-height: 100vh;
+  }
+  h2 {
+    margin-bottom: 5px;
+    color: #102a43;
+    text-align: center;
+  }
+  #instructions {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #334e68;
+    text-align: center;
+  }
+  #container {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  #plot, #freqListContainer {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.08);
+    padding: 20px;
+  }
+  #plot {
+    width: 600px;
+    height: 600px;
+    position: relative;
+  }
+  #freqListContainer {
+    width: 300px;
+    min-height: 400px;
+  }
+  #freqListContainer h3 {
+    margin-top: 0;
+    color: #102a43;
+    text-align: center;
+  }
+  #freqList {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 15px;
+  }
+  #freqList li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #334e68;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.08);
+  }
+  .colorBox {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    margin-right: 10px;
+  }
+  .freqType {
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+  .freqValue {
+    width: 60px;
+    text-align: right;
+    font-family: monospace;
+  }
+  svg {
+    width: 100%;
+    height: 100%;
+    user-select: none;
+  }
+  .cell {
+    cursor: pointer;
+    stroke: #555;
+    stroke-width: 1.4px;
+    transition: stroke-width 0.3s ease, opacity 0.3s ease;
+  }
+  .cell:hover {
+    stroke-width: 3;
+  }
+  button {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    background: #3f72af;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #2c5282;
+  }
+</style>
+</head>
+<body>
+<h2>Delaunay Triangulation + Neighborhood Frequency Visualization</h2>
+<div id="instructions">Click a cell to highlight its neighbors and compute neighborhood frequency. Delaunay Triangulation edges are also shown.</div>
+<button id="refreshButton">Randomize Cells</button>
+<div id="container">
+  <div id="plot"><svg id="svgPlot" viewBox="0 0 600 600"></svg></div>
+  <div id="freqListContainer">
+    <h3>Neighborhood Frequency</h3>
+    <ul id="freqList"></ul>
+  </div>
+</div>
+<div id="legend" style="margin-top: 30px; display: flex; justify-content:center; flex-wrap: wrap; gap: 18px;"></div>
+<script>
+function loadD3(callback) {
+  const script = document.createElement('script');
+  script.src = "https://cdn.jsdelivr.net/npm/d3@7";
+  script.onload = callback;
+  document.head.appendChild(script);
+}
+
+loadD3(() => {
+  const width = 600, height = 600;
+  const svgPlot = d3.select("#svgPlot");
+  const freqList = document.getElementById("freqList");
+  const refreshButton = document.getElementById("refreshButton");
+  const cellTypes = [
+    {type: 'Ph-S6+Tumor', color: '#E24A33'},
+    {type: 'Dendritic cells', color: '#348ABD'},
+    {type: 'T Cell', color: '#988ED5'},
+    {type: 'B Cell', color: '#777777'},
+    {type: 'Macrophage', color: '#FBC15E'},
+    {type: 'Fibroblast', color: '#8EBA42'},
+    {type: 'Neutrophils', color: '#FFB5B8'}
+  ];
+
+  const legendDiv = document.getElementById('legend');
+  legendDiv.innerHTML = "";
+  cellTypes.forEach(({type, color}) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+    item.style.gap = '8px';
+    item.style.fontWeight = '600';
+    item.style.color = '#334e68';
+    item.innerHTML = `<div class="legend-color" style="background:${color}; width: 24px; height:24px; border-radius:6px; border:1px solid #ccc;"></div>${type}`;
+    legendDiv.appendChild(item);
+  });
+
+  let cells = [], neighbors = new Map(), delaunay;
+
+  function generateCells(n = 40) {
+    cells = [];
+    neighbors.clear();
+    for(let i = 0; i < n; i++) {
+      const type = cellTypes[Math.floor(Math.random() * cellTypes.length)].type;
+      cells.push({id: i, x: 30 + Math.random() * (width - 60), y: 30 + Math.random() * (height - 60), type});
+      neighbors.set(i, new Set());
+    }
+    delaunay = d3.Delaunay.from(cells, d => d.x, d => d.y);
+    const t = delaunay.triangles;
+    for(let i = 0; i < t.length; i += 3) {
+      neighbors.get(t[i]).add(t[i+1]).add(t[i+2]);
+      neighbors.get(t[i+1]).add(t[i]).add(t[i+2]);
+      neighbors.get(t[i+2]).add(t[i]).add(t[i+1]);
+    }
+  }
+
+  function drawPlot() {
+    svgPlot.selectAll("*").remove();
+    for(let i = 0; i < delaunay.triangles.length; i += 3) {
+      const [a, b, c] = [delaunay.triangles[i], delaunay.triangles[i+1], delaunay.triangles[i+2]];
+      svgPlot.append("path")
+        .attr("d", `M${cells[a].x},${cells[a].y}L${cells[b].x},${cells[b].y}L${cells[c].x},${cells[c].y}Z`)
+        .attr("fill", "none")
+        .attr("stroke", "#ccc")
+        .attr("stroke-width", 1);
+    }
+    svgPlot.selectAll("circle.cell")
+      .data(cells)
+      .enter()
+      .append("circle")
+      .attr("class", "cell")
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y)
+      .attr("r", 13)
+      .attr("fill", d => cellTypes.find(ct => ct.type === d.type).color)
+      .on("click", (e,d) => highlightNeighborhood(d.id));
+  }
+
+  function computeNeighborhoodFrequency(cellId) {
+    const freq = new Map(cellTypes.map(({type}) => [type, 0]));
+    const set = neighbors.get(cellId);
+    set.forEach(nid => freq.set(cells[nid].type, freq.get(cells[nid].type) + 1));
+    const total = Array.from(freq.values()).reduce((a,b) => a + b, 0);
+    return new Map(Array.from(freq.entries()).map(([k,v]) => [k, v/total]));
+  }
+
+  function updateFreqList(freqMap) {
+    freqList.innerHTML = "";
+    cellTypes.forEach(({type, color}) => {
+      const val = freqMap.get(type) || 0;
+      const li = document.createElement("li");
+      li.innerHTML = `<div class='freqType'><div class='colorBox' style='background:${color}'></div>${type}</div><div class='freqValue'>${(val * 100).toFixed(1)}%</div>`;
+      freqList.appendChild(li);
+    });
+  }
+
+  function highlightNeighborhood(cellId) {
+    drawPlot();
+    svgPlot.selectAll("circle")
+      .filter(d => d.id === cellId)
+      .attr("stroke", "#000").attr("stroke-width", 4);
+    neighbors.get(cellId).forEach(nid => {
+      svgPlot.append("circle")
+        .attr("cx", cells[nid].x)
+        .attr("cy", cells[nid].y)
+        .attr("r", 19)
+        .attr("fill", cellTypes.find(ct => ct.type === cells[nid].type).color)
+        .attr("stroke", "#000")
+        .attr("stroke-width", 2)
+        .attr("opacity", 0.85);
+    });
+    updateFreqList(computeNeighborhoodFrequency(cellId));
+  }
+
+  function refreshAll() {
+    generateCells();
+    drawPlot();
+    highlightNeighborhood(0);
+  }
+
+  refreshButton.addEventListener("click", refreshAll);
+  refreshAll();
+});
+</script>
+</body>
+</html>

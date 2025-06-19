@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voronoi & Delaunay Visualizer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f6f9fc, #e9f0ff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+
+    h1 {
+      margin-top: 20px;
+      color: #333;
+    }
+
+    canvas {
+      background: #ffffffcc;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      background: #4a90e2;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #357ab8;
+    }
+
+    .indicator {
+      margin-top: 10px;
+      color: #555;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Voronoi & Delaunay Visualizer</h1>
+  <div class="controls">
+    <button onclick="generateCells()">Generate Cells</button>
+    <button onclick="showNeighborhoods()">Show Neighborhoods</button>
+  </div>
+  <div class="indicator" id="stepIndicator">Click on canvas to select a cell</div>
+  <canvas id="canvas" width="600" height="600"></canvas>
+
+  <script src="https://unpkg.com/d3-delaunay@6"></script>
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const indicator = document.getElementById("stepIndicator");
+    const width = canvas.width;
+    const height = canvas.height;
+
+    let points = [];
+    let delaunay, voronoi;
+    let selected = null;
+
+    function generateCells() {
+      points = Array.from({ length: 25 }, () => [
+        Math.random() * width,
+        Math.random() * height,
+      ]);
+      delaunay = d3.Delaunay.from(points);
+      voronoi = delaunay.voronoi([0, 0, width, height]);
+      selected = null;
+      draw();
+      indicator.textContent = "Click on canvas to select a cell";
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw Voronoi cells
+      ctx.beginPath();
+      voronoi.render(ctx);
+      ctx.strokeStyle = "#ccc";
+      ctx.stroke();
+
+      // Draw points
+      for (let i = 0; i < points.length; i++) {
+        ctx.beginPath();
+        ctx.arc(points[i][0], points[i][1], 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "#333";
+        ctx.fill();
+      }
+
+      if (selected !== null) {
+        drawNeighborhood(selected);
+      }
+    }
+
+    function showNeighborhoods() {
+      if (selected === null) {
+        indicator.textContent = "Please click a cell first!";
+        return;
+      }
+      draw();
+      indicator.textContent = `Neighbors & circumcircles for point ${selected}`;
+    }
+
+    function drawNeighborhood(index) {
+      const neighbors = Array.from(delaunay.neighbors(index));
+
+      // Highlight selected point
+      ctx.beginPath();
+      ctx.arc(points[index][0], points[index][1], 6, 0, 2 * Math.PI);
+      ctx.fillStyle = "#4a90e2";
+      ctx.fill();
+
+      // Connect neighbors
+      neighbors.forEach((n) => {
+        ctx.beginPath();
+        ctx.moveTo(points[index][0], points[index][1]);
+        ctx.lineTo(points[n][0], points[n][1]);
+        ctx.strokeStyle = "#4a90e2";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+
+      // Draw circumcircles
+      const triangles = delaunay.trianglePolygons();
+      for (const tri of triangles) {
+        const ids = tri.map(([x, y]) =>
+          points.findIndex((p) => p[0] === x && p[1] === y)
+        );
+        if (ids.includes(index)) {
+          const [a, b, c] = tri;
+          const circle = circumcircle(a, b, c);
+          if (circle) {
+            ctx.beginPath();
+            ctx.arc(circle.x, circle.y, circle.r, 0, 2 * Math.PI);
+            ctx.strokeStyle = "rgba(74, 144, 226, 0.3)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function circumcircle(a, b, c) {
+      const A = b[0] - a[0];
+      const B = b[1] - a[1];
+      const C = c[0] - a[0];
+      const D = c[1] - a[1];
+
+      const E = A * (a[0] + b[0]) + B * (a[1] + b[1]);
+      const F = C * (a[0] + c[0]) + D * (a[1] + c[1]);
+      const G = 2 * (A * (c[1] - b[1]) - B * (c[0] - b[0]));
+
+      if (Math.abs(G) < 1e-6) return null;
+
+      const cx = (D * E - B * F) / G;
+      const cy = (A * F - C * E) / G;
+      const r = Math.hypot(a[0] - cx, a[1] - cy);
+      return { x: cx, y: cy, r };
+    }
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const index = delaunay.find(x, y);
+      selected = index;
+      draw();
+      indicator.textContent = `Selected point ${index} — click 'Show Neighborhoods'`;
+    });
+
+    generateCells();
+  </script>
+</body>
+</html>
