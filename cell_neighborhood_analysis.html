@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cell Neighborhood Analysis Workflow</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .workflow {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .step {
+            border: 2px solid #e0e6ed;
+            border-radius: 15px;
+            padding: 25px;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .step.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+        .step-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .visualization {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #bbb;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .description {
+            color: #555;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e6ed;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 3px;
+        }
+        .patient-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cell Neighborhood Analysis Workflow</h1>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="startWorkflow()">Start Analysis</button>
+            <button onclick="nextStep()" id="nextBtn" disabled>Next Step</button>
+            <button onclick="resetWorkflow()">Reset</button>
+            <button onclick="toggleAutoPlay()" id="autoPlayBtn">Auto Play</button>
+        </div>
+        
+        <div class="workflow">
+            <!-- Step 1: Generate Cell Data -->
+            <div class="step" id="step1">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Generate Spatial Cell Data</div>
+                </div>
+                <div class="visualization">
+                    <canvas id="canvas1" width="800" height="300"></canvas>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>Type A Cells</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <span>Type B Cells</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2ecc71;"></div>
+                        <span>Type C Cells</span>
+                    </div>
+                </div>
+                <div class="description">
+                    Spatial distribution of different cell types in tissue samples. Each point represents a cell with its coordinates and phenotype.
+                </div>
+            </div>
+
+            <!-- Step 2: Delaunay Triangulation -->
+            <div class="step" id="step2">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Build Local Windows using Delaunay Triangulation</div>
+                </div>
+                <div class="visualization">
+                    <canvas id="canvas2" width="800" height="300"></canvas>
+                </div>
+                <div class="description">
+                    Create triangular mesh to define spatial relationships between cells. Each triangle represents a local neighborhood.
+                </div>
+            </div>
+
+            <!-- Step 3: Local Window Analysis -->
+            <div class="step" id="step3">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Calculate Phenotype Frequency in Local Windows</div>
+                </div>
+                <div class="visualization">
+                    <canvas id="canvas3" width="800" height="300"></canvas>
+                </div>
+                <div class="description">
+                    For each cell, analyze its local neighborhood to calculate the proportion of different cell types. This creates a phenotype frequency vector for each cell.
+                </div>
+            </div>
+
+            <!-- Step 4: Pool Data -->
+            <div class="step" id="step4">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Pool Data from All Patients</div>
+                </div>
+                <div class="visualization">
+                    <canvas id="canvas4" width="800" height="300"></canvas>
+                </div>
+                <div class="patient-info">
+                    <span>Patients Processed: <span id="patientCount">0</span>/5</span>
+                    <span>Total Vectors: <span id="vectorCount">0</span></span>
+                </div>
+                <div class="description">
+                    Combine phenotype frequency vectors from multiple patients to create a comprehensive dataset for clustering analysis.
+                </div>
+            </div>
+
+            <!-- Step 5: Optimal K Selection -->
+            <div class="step" id="step5">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <div class="step-title">Choose Optimal K-means Value</div>
+                </div>
+                <div class="visualization">
+                    <canvas id="canvas5" width="800" height="300"></canvas>
+                </div>
+                <div class="description">
+                    Use elbow method to determine the optimal number of clusters (K) for neighborhood classification.
+                </div>
+            </div>
+
+            <!-- Step 6: Clustering -->
+            <div class="step" id="step6">
+                <div class="step-header">
+                    <div class="step-number">6</div>
+                    <div class="step-title">Cluster Vectors to Obtain Neighborhood Labels</div>
+                </div>
+                <div class="visualization">
+                    <canvas id="canvas6" width="800" height="300"></canvas>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff6b6b;"></div>
+                        <span>Immune-rich</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4ecdc4;"></div>
+                        <span>Mixed</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffe66d;"></div>
+                        <span>Tumor-dominant</span>
+                    </div>
+                </div>
+                <div class="description">
+                    Apply K-means clustering to group similar neighborhood phenotype patterns, revealing distinct microenvironmental niches.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let isAutoPlay = false;
+        let autoPlayInterval;
+        let animationState = {};
+
+        // Initialize canvases
+        const canvases = [];
+        const contexts = [];
+        for (let i = 1; i <= 6; i++) {
+            const canvas = document.getElementById(`canvas${i}`);
+            const ctx = canvas.getContext('2d');
+            canvases.push(canvas);
+            contexts.push(ctx);
+        }
+
+        // Cell types and colors
+        const cellTypes = ['A', 'B', 'C'];
+        const cellColors = ['#e74c3c', '#3498db', '#2ecc71'];
+        const clusterColors = ['#ff6b6b', '#4ecdc4', '#ffe66d'];
+
+        // Generate random cell data
+        function generateCells(count = 50) {
+            const cells = [];
+            for (let i = 0; i < count; i++) {
+                cells.push({
+                    x: Math.random() * 700 + 50,
+                    y: Math.random() * 200 + 50,
+                    type: Math.floor(Math.random() * 3),
+                    id: i
+                });
+            }
+            return cells;
+        }
+
+        // Delaunay triangulation (simplified)
+        function delaunayTriangulation(points) {
+            const triangles = [];
+            // Simplified triangulation - in reality would use proper Delaunay algorithm
+            for (let i = 0; i < points.length - 2; i++) {
+                for (let j = i + 1; j < points.length - 1; j++) {
+                    for (let k = j + 1; k < points.length; k++) {
+                        const dist1 = distance(points[i], points[j]);
+                        const dist2 = distance(points[j], points[k]);
+                        const dist3 = distance(points[k], points[i]);
+                        if (dist1 < 150 && dist2 < 150 && dist3 < 150) {
+                            triangles.push([points[i], points[j], points[k]]);
+                        }
+                    }
+                }
+            }
+            return triangles;
+        }
+
+        function distance(p1, p2) {
+            return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+        }
+
+        // Animation functions for each step
+        function animateStep1() {
+            const ctx = contexts[0];
+            const cells = generateCells(40);
+            animationState.cells = cells;
+            
+            ctx.clearRect(0, 0, 800, 300);
+            cells.forEach((cell, index) => {
+                const progress = Math.min((Date.now() - animationState.startTime) / 2000, 1);
+                const currentIndex = Math.floor(progress * cells.length);
+                
+                if (index <= currentIndex) {
+                    ctx.fillStyle = cellColors[cell.type];
+                    ctx.beginPath();
+                    ctx.arc(cell.x, cell.y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Add type label
+                    ctx.fillStyle = 'black';
+                    ctx.font = '10px Arial';
+                    ctx.fillText(cellTypes[cell.type], cell.x - 3, cell.y + 3);
+                }
+            });
+        }
+
+        function animateStep2() {
+            const ctx = contexts[1];
+            const cells = animationState.cells || generateCells(30);
+            const triangles = delaunayTriangulation(cells);
+            
+            ctx.clearRect(0, 0, 800, 300);
+            
+            const progress = Math.min((Date.now() - animationState.startTime) / 3000, 1);
+            const currentTriangles = Math.floor(progress * triangles.length);
+            
+            // Draw triangles
+            ctx.strokeStyle = 'rgba(102, 126, 234, 0.6)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < currentTriangles; i++) {
+                const triangle = triangles[i];
+                ctx.beginPath();
+                ctx.moveTo(triangle[0].x, triangle[0].y);
+                ctx.lineTo(triangle[1].x, triangle[1].y);
+                ctx.lineTo(triangle[2].x, triangle[2].y);
+                ctx.closePath();
+                ctx.stroke();
+            }
+            
+            // Draw cells
+            cells.forEach(cell => {
+                ctx.fillStyle = cellColors[cell.type];
+                ctx.beginPath();
+                ctx.arc(cell.x, cell.y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+        }
+
+        function animateStep3() {
+            const ctx = contexts[2];
+            const cells = animationState.cells || generateCells(25);
+            
+            ctx.clearRect(0, 0, 800, 300);
+            
+            const progress = Math.min((Date.now() - animationState.startTime) / 4000, 1);
+            const currentCell = Math.floor(progress * cells.length);
+            
+            cells.forEach((cell, index) => {
+                ctx.fillStyle = cellColors[cell.type];
+                ctx.beginPath();
+                ctx.arc(cell.x, cell.y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                if (index === currentCell) {
+                    // Highlight current cell
+                    ctx.strokeStyle = '#ff4757';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(cell.x, cell.y, 8, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    
+                    // Draw neighborhood circle
+                    ctx.strokeStyle = 'rgba(255, 71, 87, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(cell.x, cell.y, 60, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    
+                    // Calculate and display frequency
+                    const neighbors = cells.filter(c => 
+                        c !== cell && distance(c, cell) < 60
+                    );
+                    const freq = [0, 0, 0];
+                    neighbors.forEach(n => freq[n.type]++);
+                    const total = neighbors.length;
+                    
+                    if (total > 0) {
+                        const freqText = freq.map((f, i) => 
+                            `${cellTypes[i]}: ${(f/total*100).toFixed(1)}%`
+                        ).join(', ');
+                        
+                        ctx.fillStyle = 'black';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(freqText, cell.x + 20, cell.y - 10);
+                    }
+                }
+            });
+        }
+
+        function animateStep4() {
+            const ctx = contexts[3];
+            ctx.clearRect(0, 0, 800, 300);
+            
+            const progress = Math.min((Date.now() - animationState.startTime) / 5000, 1);
+            const patients = Math.floor(progress * 5) + 1;
+            
+            document.getElementById('patientCount').textContent = patients;
+            document.getElementById('vectorCount').textContent = patients * 50;
+            
+            // Draw data collection visualization
+            for (let p = 0; p < patients; p++) {
+                const x = 50 + p * 140;
+                const y = 150;
+                
+                // Patient box
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y - 50, 120, 100);
+                
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '14px Arial';
+                ctx.fillText(`Patient ${p + 1}`, x + 20, y - 60);
+                
+                // Sample cells
+                for (let i = 0; i < 15; i++) {
+                    const cellX = x + 10 + (i % 5) * 20;
+                    const cellY = y - 30 + Math.floor(i / 5) * 20;
+                    const cellType = Math.floor(Math.random() * 3);
+                    
+                    ctx.fillStyle = cellColors[cellType];
+                    ctx.beginPath();
+                    ctx.arc(cellX, cellY, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                
+                // Arrow to central pool
+                if (p < patients - 1) {
+                    ctx.strokeStyle = '#27ae60';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 120, y);
+                    ctx.lineTo(x + 140, y);
+                    ctx.stroke();
+                    
+                    // Arrow head
+                    ctx.beginPath();
+                    ctx.moveTo(x + 135, y - 5);
+                    ctx.lineTo(x + 140, y);
+                    ctx.lineTo(x + 135, y + 5);
+                    ctx.stroke();
+                }
+            }
+            
+            // Central data pool
+            if (patients > 1) {
+                ctx.fillStyle = 'rgba(39, 174, 96, 0.2)';
+                ctx.fillRect(650, 100, 120, 100);
+                ctx.strokeStyle = '#27ae60';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(650, 100, 120, 100);
+                
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '12px Arial';
+                ctx.fillText('Pooled Data', 680, 140);
+                ctx.fillText(`${patients * 50} vectors`, 675, 160);
+            }
+        }
+
+        function animateStep5() {
+            const ctx = contexts[4];
+            ctx.clearRect(0, 0, 800, 300);
+            
+            const progress = Math.min((Date.now() - animationState.startTime) / 3000, 1);
+            
+            // Draw elbow curve
+            const elbowData = [
+                {k: 1, wcss: 1000},
+                {k: 2, wcss: 600},
+                {k: 3, wcss: 300},
+                {k: 4, wcss: 250},
+                {k: 5, wcss: 240},
+                {k: 6, wcss: 235}
+            ];
+            
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const maxPoints = Math.floor(progress * elbowData.length);
+            
+            for (let i = 0; i < maxPoints; i++) {
+                const x = 100 + i * 100;
+                const y = 250 - (elbowData[i].wcss / 1000) * 150;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                
+                // Draw points
+                ctx.fillStyle = i === 2 ? '#e74c3c' : '#667eea'; // Highlight optimal K=3
+                ctx.beginPath();
+                ctx.arc(x, y, i === 2 ? 8 : 5, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Labels
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '12px Arial';
+                ctx.fillText(`K=${elbowData[i].k}`, x - 10, y + 20);
+            }
+            ctx.stroke();
+            
+            // Axes
+            ctx.strokeStyle = '#34495e';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(80, 270);
+            ctx.lineTo(720, 270);
+            ctx.moveTo(80, 270);
+            ctx.lineTo(80, 50);
+            ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '14px Arial';
+            ctx.fillText('Number of Clusters (K)', 350, 290);
+            ctx.save();
+            ctx.translate(30, 160);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Within-Cluster Sum of Squares', 0, 0);
+            ctx.restore();
+            
+            if (progress > 0.8) {
+                ctx.fillStyle = '#e74c3c';
+                ctx.font = '16px Arial';
+                ctx.fillText('Optimal K = 3', 500, 100);
+            }
+        }
+
+        function animateStep6() {
+            const ctx = contexts[5];
+            const cells = generateCells(60);
+            
+            ctx.clearRect(0, 0, 800, 300);
+            
+            const progress = Math.min((Date.now() - animationState.startTime) / 4000, 1);
+            
+            // Assign cluster labels based on position (simplified)
+            cells.forEach((cell, index) => {
+                const clusterProgress = Math.min((Date.now() - animationState.startTime - 1000) / 3000, 1);
+                
+                if (clusterProgress > 0) {
+                    // Assign clusters based on spatial position
+                    if (cell.x < 300) {
+                        cell.cluster = 0; // Immune-rich
+                    } else if (cell.x > 500) {
+                        cell.cluster = 2; // Tumor-dominant
+                    } else {
+                        cell.cluster = 1; // Mixed
+                    }
+                    
+                    ctx.fillStyle = clusterColors[cell.cluster];
+                    ctx.beginPath();
+                    ctx.arc(cell.x, cell.y, 8, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Add border to show original cell type
+                    ctx.strokeStyle = cellColors[cell.type];
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(cell.x, cell.y, 8, 0, 2 * Math.PI);
+                    ctx.stroke();
+                } else {
+                    // Show original cells
+                    ctx.fillStyle = cellColors[cell.type];
+                    ctx.beginPath();
+                    ctx.arc(cell.x, cell.y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+            
+            // Draw cluster boundaries with animation
+            if (progress > 0.5) {
+                ctx.strokeStyle = 'rgba(52, 73, 94, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                
+                ctx.beginPath();
+                ctx.moveTo(300, 50);
+                ctx.lineTo(300, 250);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(500, 50);
+                ctx.lineTo(500, 250);
+                ctx.stroke();
+                
+                ctx.setLineDash([]);
+                
+                // Cluster labels
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '14px Arial';
+                ctx.fillText('Immune-rich', 120, 30);
+                ctx.fillText('Mixed', 380, 30);
+                ctx.fillText('Tumor-dominant', 580, 30);
+            }
+        }
+
+        function updateStep(stepNum) {
+            // Reset all steps
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`step${i}`).classList.remove('active');
+            }
+            
+            if (stepNum > 0) {
+                document.getElementById(`step${stepNum}`).classList.add('active');
+                animationState.startTime = Date.now();
+                
+                // Start appropriate animation
+                switch(stepNum) {
+                    case 1: 
+                        const interval1 = setInterval(() => {
+                            animateStep1();
+                            if (Date.now() - animationState.startTime > 2000) {
+                                clearInterval(interval1);
+                            }
+                        }, 50);
+                        break;
+                    case 2:
+                        const interval2 = setInterval(() => {
+                            animateStep2();
+                            if (Date.now() - animationState.startTime > 3000) {
+                                clearInterval(interval2);
+                            }
+                        }, 50);
+                        break;
+                    case 3:
+                        const interval3 = setInterval(() => {
+                            animateStep3();
+                            if (Date.now() - animationState.startTime > 4000) {
+                                clearInterval(interval3);
+                            }
+                        }, 100);
+                        break;
+                    case 4:
+                        const interval4 = setInterval(() => {
+                            animateStep4();
+                            if (Date.now() - animationState.startTime > 5000) {
+                                clearInterval(interval4);
+                            }
+                        }, 100);
+                        break;
+                    case 5:
+                        const interval5 = setInterval(() => {
+                            animateStep5();
+                            if (Date.now() - animationState.startTime > 3000) {
+                                clearInterval(interval5);
+                            }
+                        }, 50);
+                        break;
+                    case 6:
+                        const interval6 = setInterval(() => {
+                            animateStep6();
+                            if (Date.now() - animationState.startTime > 4000) {
+                                clearInterval(interval6);
+                            }
+                        }, 50);
+                        break;
+                }
+            }
+            
+            // Update progress bar
+            const progress = (stepNum / 6) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function startWorkflow() {
+            currentStep = 1;
+            updateStep(currentStep);
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextStep() {
+            if (currentStep < 6) {
+                currentStep++;
+                updateStep(currentStep);
+            }
+            
+            if (currentStep === 6) {
+                document.getElementById('nextBtn').disabled = true;
+            }
+        }
+
+        function resetWorkflow() {
+            currentStep = 0;
+            updateStep(0);
+            document.getElementById('nextBtn').disabled = true;
+            document.getElementById('patientCount').textContent = '0';
+            document.getElementById('vectorCount').textContent = '0';
+            
+            // Clear all canvases
+            contexts.forEach(ctx => ctx.clearRect(0, 0, 800, 300));
+        }
+
+        function toggleAutoPlay() {
+            const btn = document.getElementById('autoPlayBtn');
+            
+            if (isAutoPlay) {
+                clearInterval(autoPlayInterval);
+                isAutoPlay = false;
+                btn.textContent = 'Auto Play';
+            } else {
+                isAutoPlay = true;
+                btn.textContent = 'Stop Auto';
+                
+                if (currentStep === 0) {
+                    startWorkflow();
+                }
+                
+                autoPlayInterval = setInterval(() => {
+                    if (currentStep < 6) {
+                        nextStep();
+                    } else {
+                        resetWorkflow();
+                        setTimeout(() => startWorkflow(), 1000);
+                    }
+                }, 4000);
+            }
+        }
+
+        // Initialize
+        resetWorkflow();
+    </script>
+</body>
+</html>
