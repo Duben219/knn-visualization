@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Principal Component Analysis</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h2, h3 { text-align: center; }
+  #description {
+    background: #f9f9f9; border: 1px solid #ddd; padding: 15px 25px; margin-bottom: 20px;
+    line-height: 1.6; font-size: 16px; border-radius: 5px;
+    max-width: 900px; margin-left: auto; margin-right: auto;
+  }
+  #plots { display: flex; justify-content: space-around; flex-wrap: wrap; }
+  .plot-container { width: 45%; min-width: 350px; margin-bottom: 30px; }
+  #buttons { text-align: center; margin-bottom: 20px; }
+  button { margin: 0 10px; padding: 8px 15px; font-size: 16px; cursor: pointer; }
+  button:hover { background-color: #eef; }
+</style>
+</head>
+<body>
+
+<h2>Principal Component Analysis</h2>
+
+<!-- Scheme 1 Description -->
+<div id="description">
+  <h3>Data Preparation</h3>
+  <p>
+    In multi-patient cancer studies, cell phenotype counts are first aggregated per patient,  
+    calculating proportions or normalized counts of different cell types to create a <strong>patient × cell phenotype</strong> matrix.  
+    Principal Component Analysis (PCA) is then performed on this matrix without pre-defining groups,  
+    allowing identification of major patterns of variation in cellular composition across patients.
+  </p>
+  <p>
+    This approach facilitates direct comparison of immune and tumor cell compositions between patients,  
+    enabling exploration of clinical and biological subgroup differences by coloring samples based on various groupings.  
+    The interactive plots below show PCA distributions and PC1 score boxplots across different grouping strategies,  
+    along with the PCA loadings to highlight which cell types contribute most to observed variation.
+  </p>
+</div>
+
+<div id="buttons">
+  <button onclick="updateGrouping('none')">No Grouping (Uniform Color)</button>
+  <button onclick="updateGrouping('histology')">Histological Subtype</button>
+  <button onclick="updateGrouping('stage')">Clinical Stage</button>
+  <button onclick="updateGrouping('molecular')">Molecular Subtype / Mutation</button>
+  <button onclick="updateGrouping('neighborhood')">Cellular Neighborhood</button>
+</div>
+
+<div id="plots">
+  <div class="plot-container">
+    <h3>PCA Sample Distribution (PC1 vs PC2)</h3>
+    <div id="pcaScatter"></div>
+  </div>
+
+  <div class="plot-container">
+    <h3>PC1 Score Boxplot (By Group)</h3>
+    <div id="boxPlot"></div>
+  </div>
+
+  <div class="plot-container" style="width:90%;">
+    <h3>PC1 Loadings (Cell Type Contributions)</h3>
+    <div id="loadingPlot"></div>
+  </div>
+</div>
+
+<script>
+  // Simulated data (replace with real data if needed)
+  const samples = 100;
+  // Generate PCA coordinates and groups
+  const data = [];
+  const groups = {
+    histology: [],
+    stage: [],
+    molecular: [],
+    neighborhood: []
+  };
+  const groupLabels = {
+    histology: ['Adenocarcinoma', 'Squamous cell carcinoma', 'Others'],
+    stage: ['Stage I', 'Stage II', 'Stage III', 'Stage IV'],
+    molecular: ['Mutation A', 'Mutation B', 'No Mutation'],
+    neighborhood: ['Neighborhood 1', 'Neighborhood 2', 'Neighborhood 3']
+  };
+
+  // Randomly generate sample data
+  for (let i=0; i<samples; i++) {
+    const pc1 = Math.random()*6 - 3 + (i%3)*2;
+    const pc2 = Math.random()*6 - 3 + (i%4)*1.5;
+    data.push({pc1, pc2, id: i});
+    groups.histology.push(groupLabels.histology[i%3]);
+    groups.stage.push(groupLabels.stage[i%4]);
+    groups.molecular.push(groupLabels.molecular[i%3]);
+    groups.neighborhood.push(groupLabels.neighborhood[i%3]);
+  }
+
+  // PCA loadings example data
+  const cellTypes = ['T cells', 'B cells', 'Macrophages', 'Tumor cells', 'Fibroblasts'];
+  const loadings = [0.6, -0.4, 0.3, 0.7, -0.2];
+
+  // Color mapping
+  const colorMaps = {
+    none: '#888',
+    histology: ['#e41a1c','#377eb8','#4daf4a'],
+    stage: ['#984ea3','#ff7f00','#ffff33','#a65628'],
+    molecular: ['#f781bf','#999999','#66c2a5'],
+    neighborhood: ['#d73027','#4575b4','#fee090']
+  };
+
+  // Color assignment function
+  function getColors(groupArray, groupType) {
+    if (groupType === 'none') return Array(samples).fill(colorMaps.none);
+    const colors = colorMaps[groupType];
+    return groupArray.map(g => {
+      const idx = groupLabels[groupType].indexOf(g);
+      return idx >= 0 ? colors[idx] : '#ccc';
+    });
+  }
+
+  // Draw PCA scatter plot
+  function drawPCA(groupType='none') {
+    const colors = getColors(groups[groupType] || [], groupType);
+    const trace = {
+      x: data.map(d => d.pc1),
+      y: data.map(d => d.pc2),
+      mode: 'markers',
+      type: 'scatter',
+      marker: {color: colors, size: 8, line: {width: 0.5, color: '#222'}},
+      text: data.map((d,i) => `Sample ${d.id}<br>Group: ${groupType==='none'?'None':groups[groupType][i]}`),
+      hoverinfo: 'text'
+    };
+    const layout = {
+      xaxis: {title: 'PC1'},
+      yaxis: {title: 'PC2'},
+      margin: {t:30},
+      height: 400,
+      hovermode: 'closest'
+    };
+    Plotly.newPlot('pcaScatter', [trace], layout, {responsive: true});
+  }
+
+  // Draw boxplot of PC1 scores
+  function drawBoxPlot(groupType='none') {
+    if (groupType === 'none') {
+      // Single boxplot for all samples
+      Plotly.newPlot('boxPlot', [{
+        y: data.map(d => d.pc1),
+        type: 'box',
+        name: 'All Samples',
+        boxpoints: 'outliers',
+        marker: {color: '#888'}
+      }], {height: 400, margin:{t:30}});
+      return;
+    }
+
+    // Boxplots grouped by group labels
+    const traces = [];
+    groupLabels[groupType].forEach(label => {
+      const vals = data.filter((_,i) => groups[groupType][i] === label).map(d => d.pc1);
+      traces.push({
+        y: vals,
+        type: 'box',
+        name: label,
+        boxpoints: 'outliers'
+      });
+    });
+    const layout = {height: 400, margin: {t:30}, yaxis: {title: 'PC1 Scores'}};
+    Plotly.newPlot('boxPlot', traces, layout);
+  }
+
+  // Draw PCA loadings bar chart
+  function drawLoadings() {
+    const barColors = ['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854'];
+const trace = {
+  x: loadings,
+  y: cellTypes,
+  type: 'bar',
+  orientation: 'h',
+  marker: {
+    color: barColors
+  }
+};
+
+    const layout = {
+      margin: {l: 100, r: 20, t: 30, b: 40},
+      height: 300,
+      xaxis: {title: 'Loading Magnitude'},
+      yaxis: {autorange: 'reversed'}
+    };
+    Plotly.newPlot('loadingPlot', [trace], layout);
+  }
+
+  // Group selection event handler
+  function updateGrouping(groupType) {
+    drawPCA(groupType);
+    drawBoxPlot(groupType);
+  }
+
+  // Initialize plots
+  drawPCA('none');
+  drawBoxPlot('none');
+  drawLoadings();
+</script>
+
+</body>
+</html>
