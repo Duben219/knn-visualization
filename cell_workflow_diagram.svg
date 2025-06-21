@@ -1,0 +1,381 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.1"/>
+      <stop offset="100%" style="stop-color:#3CB371;stop-opacity:0.3"/>
+    </linearGradient>
+    <linearGradient id="stepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#3CB371"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <dropShadow dx="2" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.3)"/>
+    </filter>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+            refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#667eea"/>
+    </marker>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="url(#bgGrad)"/>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" font-family="Arial, sans-serif" 
+        font-size="24" font-weight="bold" fill="#2c3e50">
+    Cell Neighborhood Analysis-Ripley's K Function Method
+  </text>
+  
+  <!-- Step 1: Original Cell Data (UNCHANGED) -->
+  <g id="step1">
+    <rect x="20" y="60" width="180" height="140" rx="10" fill="white" 
+          stroke="#667eea" stroke-width="2" filter="url(#shadow)"/>
+    <text x="110" y="80" text-anchor="middle" font-family="Arial" 
+          font-size="12" font-weight="bold" fill="#2c3e50">
+      1. Spatial Cell Data
+    </text>
+    
+    <!-- Sample cells -->
+    <circle cx="50" cy="110" r="4" fill="#e74c3c"/>
+    <text x="45" y="115" font-family="Arial" font-size="8" fill="white">A</text>
+    <circle cx="80" cy="120" r="4" fill="#3498db"/>
+    <text x="76" y="125" font-family="Arial" font-size="8" fill="white">B</text>
+    <circle cx="120" cy="100" r="4" fill="#2ecc71"/>
+    <text x="116" y="105" font-family="Arial" font-size="8" fill="white">C</text>
+    <circle cx="90" cy="150" r="4" fill="#e74c3c"/>
+    <text x="85" y="155" font-family="Arial" font-size="8" fill="white">A</text>
+    <circle cx="140" cy="130" r="4" fill="#3498db"/>
+    <text x="136" y="135" font-family="Arial" font-size="8" fill="white">B</text>
+    <circle cx="160" cy="160" r="4" fill="#2ecc71"/>
+    <text x="156" y="165" font-family="Arial" font-size="8" fill="white">C</text>
+    <circle cx="70" cy="180" r="4" fill="#e74c3c"/>
+    <text x="65" y="185" font-family="Arial" font-size="8" fill="white">A</text>
+    
+    <text x="110" y="195" text-anchor="middle" font-family="Arial" 
+          font-size="10" fill="#555">mIF circular images with cell data</text>
+  </g>
+  
+  <!-- Arrow 1 -->
+  <line x1="200" y1="130" x2="240" y2="130" stroke="#667eea" 
+        stroke-width="3" marker-end="url(#arrowhead)"/>
+  
+  <!-- Step 2: Ripley's K Function Analysis -->
+  <g id="step2">
+    <rect x="250" y="60" width="180" height="140" rx="10" fill="white" 
+          stroke="#667eea" stroke-width="2" filter="url(#shadow)"/>
+    <text x="340" y="80" text-anchor="middle" font-family="Arial" 
+          font-size="12" font-weight="bold" fill="#2c3e50">
+      2. Ripley's K Function
+    </text>
+    
+    <!-- Circular mIF image representation -->
+    <circle cx="340" cy="130" r="37" fill="none" stroke="#9b59b6" 
+            stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="340" y="105" text-anchor="middle" font-family="Arial" 
+          font-size="8" fill="#9b59b6" font-weight="bold">mIF Image</text>
+    
+    <!-- Sample cells within circle -->
+    <circle cx="320" cy="120" r="3" fill="#e74c3c"/>
+    <circle cx="350" cy="115" r="3" fill="#3498db"/>
+    <circle cx="360" cy="140" r="3" fill="#2ecc71"/>
+    <circle cx="325" cy="145" r="3" fill="#e74c3c"/>
+    <circle cx="355" cy="150" r="3" fill="#3498db"/>
+    
+    <!-- K function visualization -->
+    <g transform="translate(280, 185)">
+      <text x="60" y="0" text-anchor="middle" font-family="Arial" 
+            font-size="9" fill="#2c3e50" font-weight="bold">K(r) Analysis</text>
+      <!-- Mini graph -->
+      <line x1="10" y1="15" x2="110" y2="15" stroke="#34495e" stroke-width="1"/>
+      <line x1="10" y1="15" x2="10" y2="5" stroke="#34495e" stroke-width="1"/>
+      <path d="M 10 15 Q 30 12 60 8 Q 90 10 110 12" stroke="#e74c3c" 
+            stroke-width="2" fill="none"/>
+      <text x="60" y="25" text-anchor="middle" font-family="Arial" 
+            font-size="7" fill="#555">Distance (r)</text>
+    </g>
+    
+    <text x="340" y="220" text-anchor="middle" font-family="Arial" 
+          font-size="10" fill="#555">Analyze spatial point patterns</text>
+  </g>
+  
+  <!-- Arrow 2 -->
+  <line x1="430" y1="130" x2="470" y2="130" stroke="#667eea" 
+        stroke-width="3" marker-end="url(#arrowhead)"/>
+  
+  <!-- Step 3: Extract L(r) Metrics -->
+  <g id="step3">
+    <rect x="480" y="60" width="180" height="140" rx="10" fill="white" 
+          stroke="#667eea" stroke-width="2" filter="url(#shadow)"/>
+    <text x="570" y="80" text-anchor="middle" font-family="Arial" 
+          font-size="12" font-weight="bold" fill="#2c3e50">
+      3. Extract L(r) Metrics
+    </text>
+    
+    <!-- L(r) - r function plot -->
+    <g transform="translate(500, 95)">
+      <!-- Axes -->
+      <line x1="15" y1="70" x2="125" y2="70" stroke="#34495e" stroke-width="2"/>
+      <line x1="15" y1="70" x2="15" y2="15" stroke="#34495e" stroke-width="2"/>
+      
+      <!-- Zero line -->
+      <line x1="15" y1="50" x2="125" y2="50" stroke="#bdc3c7" 
+            stroke-width="1" stroke-dasharray="2,2"/>
+      
+      <!-- L(r) - r curve -->
+      <path d="M 15 50 Q 35 35 55 25 Q 75 30 95 40 Q 115 45 125 48" 
+            stroke="#e74c3c" stroke-width="3" fill="none"/>
+      
+      <!-- Fill area under curve (AUC) -->
+      <path d="M 15 50 Q 35 35 55 25 Q 75 30 95 40 Q 115 45 125 48 L 125 50 L 15 50 Z" 
+            fill="rgba(231, 76, 60, 0.2)"/>
+      
+      <!-- Max point -->
+      <circle cx="55" cy="25" r="3" fill="#f39c12"/>
+      <text x="60" y="20" font-family="Arial" font-size="8" fill="#f39c12" font-weight="bold">max</text>
+      
+      <!-- Labels -->
+      <text x="70" y="85" text-anchor="middle" font-family="Arial" font-size="8" fill="#2c3e50">r</text>
+      <text x="5" y="45" text-anchor="middle" font-family="Arial" font-size="8" fill="#2c3e50" transform="rotate(-90, 5, 45)">L(r)-r</text>
+    </g>
+    
+    <!-- Metrics boxes -->
+    <rect x="490" y="170" width="70" height="25" rx="3" fill="#ffeaa7" stroke="#fdcb6e"/>
+    <text x="525" y="185" text-anchor="middle" font-family="Arial" 
+          font-size="9" font-weight="bold" fill="#2d3436">auc_l_r</text>
+    
+    <rect x="570" y="170" width="70" height="25" rx="3" fill="#fab1a0" stroke="#e17055"/>
+    <text x="605" y="185" text-anchor="middle" font-family="Arial" 
+          font-size="9" font-weight="bold" fill="#2d3436">max_l_r</text>
+    
+    <text x="570" y="210" text-anchor="middle" font-family="Arial" 
+          font-size="10" fill="#555">Two key spatial metrics</text>
+  </g>
+  
+  <!-- Arrow 3 -->
+  <line x1="660" y1="130" x2="700" y2="130" stroke="#667eea" 
+        stroke-width="3" marker-end="url(#arrowhead)"/>
+  
+  <!-- Step 4: Pool Metrics from Multiple Patients -->
+  <g id="step4">
+    <rect x="720" y="40" width="200" height="180" rx="10" fill="white" 
+          stroke="#667eea" stroke-width="2" filter="url(#shadow)"/>
+    <text x="820" y="60" text-anchor="middle" font-family="Arial" 
+          font-size="12" font-weight="bold" fill="#2c3e50">
+      4. Pool Metrics from All Patients
+    </text>
+    
+    <!-- Patient 1 -->
+    <g transform="translate(730, 70)">
+      <rect x="0" y="0" width="40" height="40" rx="3" fill="#e8f4fd" stroke="#3498db"/>
+      <text x="20" y="15" text-anchor="middle" font-family="Arial" font-size="8" fill="#2c3e50">P1</text>
+      <text x="20" y="30" text-anchor="middle" font-family="Arial" font-size="6" fill="#555">auc: 0.45</text>
+      <text x="20" y="38" text-anchor="middle" font-family="Arial" font-size="6" fill="#555">max: 1.2</text>
+    </g>
+    
+    <!-- Patient 2 -->
+    <g transform="translate(780, 70)">
+      <rect x="0" y="0" width="40" height="40" rx="3" fill="#fce8e6" stroke="#e74c3c"/>
+      <text x="20" y="15" text-anchor="middle" font-family="Arial" font-size="8" fill="#2c3e50">P2</text>
+      <text x="20" y="30" text-anchor="middle" font-family="Arial" font-size="6" fill="#555">auc: 0.32</text>
+      <text x="20" y="38" text-anchor="middle" font-family="Arial" font-size="6" fill="#555">max: 0.8</text>
+    </g>
+    
+    <!-- Patient 3 -->
+    <g transform="translate(830, 70)">
+      <rect x="0" y="0" width="40" height="40" rx="3" fill="#e8f8f5" stroke="#2ecc71"/>
+      <text x="20" y="15" text-anchor="middle" font-family="Arial" font-size="8" fill="#2c3e50">P3</text>
+      <text x="20" y="30" text-anchor="middle" font-family="Arial" font-size="6" fill="#555">auc: 0.58</text>
+      <text x="20" y="38" text-anchor="middle" font-family="Arial" font-size="6" fill="#555">max: 1.5</text>
+    </g>
+    
+    <!-- Patient 4 -->
+    <g transform="translate(880, 70)">
+      <rect x="0" y="0" width="40" height="40" rx="3" fill="#fff3cd" stroke="#f39c12"/>
+      <text x="20" y="15" text-anchor="middle" font-family="Arial" font-size="8" fill="#2c3e50">P4</text>
+      <text x="20" y="30" text-anchor="middle" font-family="Arial" font-size="6" fill="#555">auc: 0.41</text>
+      <text x="20" y="38" text-anchor="middle" font-family="Arial" font-size="6" fill="#555">max: 1.0</text>
+    </g>
+    
+    <!-- Arrows pointing down -->
+    <line x1="750" y1="115" x2="750" y2="135" stroke="#27ae60" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="800" y1="115" x2="800" y2="135" stroke="#27ae60" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="850" y1="115" x2="850" y2="135" stroke="#27ae60" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="900" y1="115" x2="900" y2="135" stroke="#27ae60" stroke-width="2" marker-end="url(#arrowhead)"/>
+    
+    <!-- Pooled metrics -->
+    <rect x="760" y="140" width="120" height="50" rx="5" fill="#e8f8f5" stroke="#27ae60" stroke-width="2"/>
+    <text x="820" y="155" text-anchor="middle" font-family="Arial" font-size="10" fill="#2c3e50">Pooled Metrics</text>
+    <text x="820" y="170" text-anchor="middle" font-family="Arial" font-size="9" fill="#555">All auc_l_r &amp; max_l_r</text>
+    <text x="820" y="182" text-anchor="middle" font-family="Arial" font-size="9" fill="#555">from all patients</text>
+    
+    <text x="820" y="210" text-anchor="middle" font-family="Arial" 
+          font-size="10" fill="#555">Combine all spatial metrics</text>
+  </g>
+  
+  <!-- Arrow 4 (curved down) -->
+  <path d="M 820 220 Q 820 260 600 300" stroke="#667eea" stroke-width="3" 
+        fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Step 5: Choose Optimal K (UNCHANGED) -->
+  <g id="step5">
+    <rect x="480" y="320" width="240" height="160" rx="10" fill="white" 
+          stroke="#667eea" stroke-width="2" filter="url(#shadow)"/>
+    <text x="600" y="340" text-anchor="middle" font-family="Arial" 
+          font-size="12" font-weight="bold" fill="#2c3e50">
+      5. Choose Optimal K-means Value
+    </text>
+    
+    <!-- Elbow curve -->
+    <g transform="translate(500, 330)">
+      <!-- Axes -->
+      <line x1="20" y1="100" x2="200" y2="100" stroke="#34495e" stroke-width="2"/>
+      <line x1="20" y1="100" x2="20" y2="20" stroke="#34495e" stroke-width="2"/>
+      
+      <!-- Data points and curve -->
+      <circle cx="40" cy="30" r="3" fill="#667eea"/>
+      <text x="35" y="115" font-family="Arial" font-size="8" fill="#2c3e50">1</text>
+      
+      <circle cx="70" cy="45" r="3" fill="#667eea"/>
+      <text x="65" y="115" font-family="Arial" font-size="8" fill="#2c3e50">2</text>
+      
+      <circle cx="100" cy="70" r="5" fill="#e74c3c"/>
+      <text x="95" y="115" font-family="Arial" font-size="8" fill="#e74c3c">3</text>
+      
+      <circle cx="130" cy="75" r="3" fill="#667eea"/>
+      <text x="125" y="115" font-family="Arial" font-size="8" fill="#2c3e50">4</text>
+      
+      <circle cx="160" cy="80" r="3" fill="#667eea"/>
+      <text x="155" y="115" font-family="Arial" font-size="8" fill="#2c3e50">5</text>
+      
+      <!-- Curve line -->
+      <path d="M 40 30 Q 70 35 100 70 Q 130 72 160 80" stroke="#667eea" 
+            stroke-width="2" fill="none"/>
+      
+      <!-- Labels -->
+      <text x="110" y="128" text-anchor="middle" font-family="Arial" font-size="9" fill="#2c3e50">Number of Clusters (K)</text>
+      <text x="-5" y="65" text-anchor="middle" font-family="Arial" font-size="8" fill="#2c3e50" transform="rotate(-90, -5, 65)">WCSS</text>
+      
+      <!-- Optimal K indicator -->
+      <text x="100" y="50" text-anchor="middle" font-family="Arial" font-size="10" 
+            fill="#e74c3c" font-weight="bold">Optimal K=3</text>
+    </g>
+    
+    <text x="600" y="470" text-anchor="middle" font-family="Arial" 
+          font-size="10" fill="#555">Use elbow method on spatial metrics</text>
+  </g>
+  
+  <!-- Arrow 5 -->
+  <line x1="480" y1="400" x2="440" y2="400" stroke="#667eea" 
+        stroke-width="3" marker-end="url(#arrowhead)"/>
+  
+  <!-- Step 6: Final Clustering (UNCHANGED) -->
+  <g id="step6">
+    <rect x="20" y="320" width="400" height="160" rx="10" fill="white" 
+          stroke="#667eea" stroke-width="2" filter="url(#shadow)"/>
+    <text x="220" y="340" text-anchor="middle" font-family="Arial" 
+          font-size="12" font-weight="bold" fill="#2c3e50">
+      6. Cluster Metrics to Obtain Spatial Pattern Labels
+    </text>
+    
+    <!-- Cluster 1: High clustering -->
+    <g transform="translate(40, 360)">
+      <rect x="0" y="0" width="110" height="80" rx="5" fill="#ffe6e6" stroke="#ff6b6b" stroke-width="2"/>
+      <text x="55" y="15" text-anchor="middle" font-family="Arial" font-size="10" 
+            font-weight="bold" fill="#d63031">High Clustering</text>
+      <circle cx="20" cy="30" r="4" fill="#ff6b6b"/>
+      <circle cx="40" cy="35" r="4" fill="#ff6b6b"/>
+      <circle cx="60" cy="25" r="4" fill="#ff6b6b"/>
+      <circle cx="80" cy="40" r="4" fill="#ff6b6b"/>
+      <circle cx="30" cy="55" r="4" fill="#ff6b6b"/>
+      <circle cx="70" cy="60" r="4" fill="#ff6b6b"/>
+      <text x="55" y="75" text-anchor="middle" font-family="Arial" font-size="8" fill="#555">High auc_l_r &amp; max_l_r</text>
+    </g>
+    
+    <!-- Cluster 2: Moderate clustering -->
+    <g transform="translate(165, 360)">
+      <rect x="0" y="0" width="110" height="80" rx="5" fill="#e6fffe" stroke="#4ecdc4" stroke-width="2"/>
+      <text x="55" y="15" text-anchor="middle" font-family="Arial" font-size="10" 
+            font-weight="bold" fill="#00695c">Moderate</text>
+      <circle cx="20" cy="30" r="4" fill="#4ecdc4"/>
+      <circle cx="40" cy="35" r="4" fill="#4ecdc4"/>
+      <circle cx="60" cy="25" r="4" fill="#4ecdc4"/>
+      <circle cx="80" cy="40" r="4" fill="#4ecdc4"/>
+      <circle cx="30" cy="55" r="4" fill="#4ecdc4"/>
+      <circle cx="70" cy="60" r="4" fill="#4ecdc4"/>
+      <text x="55" y="75" text-anchor="middle" font-family="Arial" font-size="8" fill="#555">Medium spatial patterns</text>
+    </g>
+    
+    <!-- Cluster 3: Random/dispersed -->
+    <g transform="translate(290, 360)">
+      <rect x="0" y="0" width="110" height="80" rx="5" fill="#fff9e6" stroke="#ffe66d" stroke-width="2"/>
+      <text x="55" y="15" text-anchor="middle" font-family="Arial" font-size="10" 
+            font-weight="bold" fill="#d4851a">Random/Dispersed</text>
+      <circle cx="20" cy="30" r="4" fill="#ffe66d"/>
+      <circle cx="40" cy="35" r="4" fill="#ffe66d"/>
+      <circle cx="60" cy="25" r="4" fill="#ffe66d"/>
+      <circle cx="80" cy="40" r="4" fill="#ffe66d"/>
+      <circle cx="30" cy="55" r="4" fill="#ffe66d"/>
+      <circle cx="70" cy="60" r="4" fill="#ffe66d"/>
+      <text x="55" y="75" text-anchor="middle" font-family="Arial" font-size="8" fill="#555">Low auc_l_r &amp; max_l_r</text>
+    </g>
+    
+    <text x="220" y="470" text-anchor="middle" font-family="Arial" 
+          font-size="10" fill="#555">Identify distinct spatial clustering patterns</text>
+  </g>
+  
+  <!-- Result arrow and text -->
+  <g transform="translate(20, 500)">
+    <rect x="0" y="0" width="1160" height="80" rx="10" fill="#f8f9fa" 
+          stroke="#667eea" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="580" y="25" text-anchor="middle" font-family="Arial" 
+          font-size="16" font-weight="bold" fill="#2c3e50">
+      Result: Spatial Pattern Classification based on Ripley's K Function
+    </text>
+    <text x="580" y="45" text-anchor="middle" font-family="Arial" 
+          font-size="12" fill="#555">
+      Each mIF image is classified by its spatial clustering characteristics (auc_l_r, max_l_r)
+    </text>
+    <text x="580" y="65" text-anchor="middle" font-family="Arial" 
+          font-size="12" fill="#555">
+      Enables quantitative analysis of cellular spatial organization patterns
+    </text>
+  </g>
+  
+  <!-- Legend -->
+  <g transform="translate(950, 60)">
+    <rect x="0" y="0" width="200" height="140" rx="8" fill="white" 
+          stroke="#ddd" stroke-width="1" filter="url(#shadow)"/>
+    <text x="100" y="20" text-anchor="middle" font-family="Arial" 
+          font-size="12" font-weight="bold" fill="#2c3e50">Ripley's K Metrics</text>
+    
+    <rect x="10" y="30" width="15" height="10" rx="2" fill="#ffeaa7" stroke="#fdcb6e"/>
+    <text x="30" y="40" font-family="Arial" font-size="9" fill="#2c3e50">auc_l_r: Area under L(r)-r curve</text>
+    
+    <rect x="10" y="50" width="15" height="10" rx="2" fill="#fab1a0" stroke="#e17055"/>
+    <text x="30" y="60" font-family="Arial" font-size="9" fill="#2c3e50">max_l_r: Maximum L(r)-r value</text>
+    
+    <text x="100" y="80" text-anchor="middle" font-family="Arial" 
+          font-size="10" font-weight="bold" fill="#2c3e50">Cell Types</text>
+    
+    <circle cx="20" cy="95" r="4" fill="#e74c3c"/>
+    <text x="35" y="100" font-family="Arial" font-size="10" fill="#2c3e50">Type A (e.g., Tumor)</text>
+    
+    <circle cx="20" cy="115" r="4" fill="#3498db"/>
+    <text x="35" y="120" font-family="Arial" font-size="10" fill="#2c3e50">Type B (e.g., Immune)</text>
+    
+    <circle cx="20" cy="135" r="4" fill="#2ecc71"/>
+    <text x="35" y="140" font-family="Arial" font-size="10" fill="#2c3e50">Type C (e.g., Stroma)</text>
+  </g>
+  
+  <!-- Workflow direction indicators -->
+  <g>
+    <text x="600" y="770" text-anchor="middle" font-family="Arial" 
+          font-size="14" font-weight="bold" fill="#667eea">
+      ← Spatial Pattern Analysis Flow →
+    </text>
+    <text x="600" y="790" text-anchor="middle" font-family="Arial" 
+          font-size="12" fill="#555">
+      From mIF images to spatial clustering classification via Ripley's K Function
+    </text>
+  </g>
+</svg>
